@@ -49,3 +49,7 @@ out/
 _site/
 *.css
 !petclinic.css
+
+*.png
+*.iprof
+*.info

@@ -1,16 +1,15 @@
 set -e
 
 function print() {
-    printf "\033[1;34m$1\033[0m\n"
+    printf "\033[1;35m$1\033[0m\n"
 }
 
-print "Starting Spring Petclinic..."
-
-java -XX:-UseJVMCICompiler -Xmx512m -jar ./target/spring-petclinic-3.1.0-SNAPSHOT.jar &
+print "Starting instrumented Spring Petclinic..."
+./target/spring-petclinic-instrumented-lcov -Xmx512m &
 export PID=$!
-psrecord $PID --plot "$(date +%s)-jit-c2.png" --max-cpu 1600 --max-memory 800 --include-children &
+psrecord $PID --plot "$(date +%s)-native-lcov.png" --max-cpu 1600 --max-memory 800 --include-children &
 
-sleep 10
+sleep 3
 print "Done waiting for Spring Petclinic to come up..."
 
 print "Warming up Spring Petclinic..."

@@ -5,11 +5,11 @@ function print() {
 }
 
 print "Starting instrumented Spring Petclinic..."
-./spring-petclinic/target/spring-petclinic-instrumented -Xmx512m &
+./target/spring-petclinic-instrumented -Xmx512m &
 export PID=$!
 psrecord $PID --plot "$(date +%s)-native.png" --max-cpu 1600 --max-memory 800 --include-children &
 
-sleep 10
+sleep 3
 print "Done waiting for Spring Petclinic to come up..."
 
 print "Warming up Spring Petclinic..."

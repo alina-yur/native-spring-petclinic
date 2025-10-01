@@ -1,8 +1,7 @@
-local hostUrl = "http://localhost:8080";
+local hostUrl = "http://localhost:8080"
 local hostUrlLength = string.len(hostUrl)
 local petTypes = {"bird", "cat", "dog", "hamster", "lizard", "snake"}
-
-local newOwnerRequest = 'firstName=F%d&lastName=L%d&address=A%d&city=C%d&telephone=%d'
+local newOwnerRequest = 'firstName=F%d&lastName=L%d&address=A%d&city=C%d&telephone=555%07d'
 local newPetRequest = 'name=Pet%d&birthDate=2010-10-05&type=%s'
 local newVisitRequest = 'date=2021-02-23&description=Broken+leg'
 
@@ -14,70 +13,100 @@ postHeaders["Content-Type"] = "application/x-www-form-urlencoded"
 postHeaders["Host"] = "localhost:8080"
 
 local threadIdCounter = 1
+
 function setup(thread)
-    thread:set("threadId", threadIdCounter)
-    threadIdCounter = threadIdCounter + 1
+  thread:set("threadId", threadIdCounter)
+  threadIdCounter = threadIdCounter + 1
 end
 
 local ownerCounter
 local petCounter
+
 function init(args)
-   ownerCounter = 1000000000000000 + 10000000000000 * threadId
-   petCounter = ownerCounter
+  local threadId = threadId or 0
+  -- Use reasonable counter values that won't overflow or use scientific notation
+  ownerCounter = 1000000 + 10000 * threadId
+  petCounter = ownerCounter
 end
 
 local ownerPath
 local petId
 local state = -1
+
 function request()
-    if state == 0 then
-        -- create a new owner at http://localhost:8080/owners/new
-        ownerCounter = ownerCounter + 1
-        method = "POST"
-        path = "/owners/new"
-        headers = postHeaders
-        body = string.format(newOwnerRequest, ownerCounter, ownerCounter, ownerCounter, ownerCounter, ownerCounter / 10000000)
-    elseif state == 1 then
-        -- create a new pet for the current owner at http://localhost:8080/owners/%d/pets/new
-        petCounter = petCounter + 1
-        method = "POST"
-        path = ownerPath .. "/pets/new"
-        headers = postHeaders
-        body = string.format(newPetRequest, petCounter, petTypes[(petCounter % #petTypes) + 1])
-    elseif state == 2 then
-        -- navigate to http://localhost:8080/owners/%d
-        method = "GET"
-        path = ownerPath
-        headers = getHeaders
-        body = ""
-    elseif state == 3 then
-        -- create a new visit for the current pet at http://localhost:8080/owners/%d/pets/%d/visits/new
-        method = "POST"
-        path = ownerPath .. "/pets/" .. petId .. "/visits/new"
-        headers = postHeaders
-        body = string.format(newVisitRequest)
-    elseif state == 4 then
-        -- navigate to http://localhost:8080/owners/%d
-        method = "GET"
-        path = ownerPath
-        headers = getHeaders
-        body = ""
-    elseif state == -1 then
-        -- workaround as the response handler is not invoked for the very first request
-        method = "GET"
-        path = "/"
-        headers = getHeaders
-        body = ""
+  if state == 0 then
+    -- create a new owner at http://localhost:8080/owners/new
+    ownerCounter = ownerCounter + 1
+    method = "POST"
+    path = "/owners/new"
+    headers = postHeaders
+    body = string.format(newOwnerRequest, ownerCounter, ownerCounter, ownerCounter, ownerCounter, ownerCounter)
+  elseif state == 1 then
+    -- create a new pet for the current owner at http://localhost:8080/owners/%d/pets/new
+    if not ownerPath then
+      -- Skip if ownerPath wasn't set, go to next state
+      state = (state + 1) % 5
+      return request()
     end
-    
-    state = (state + 1) % 5
-    return wrk.format(method, path, headers, body)
+    petCounter = petCounter + 1
+    method = "POST"
+    path = ownerPath .. "/pets/new"
+    headers = postHeaders
+    body = string.format(newPetRequest, petCounter, petTypes[(petCounter % #petTypes) + 1])
+  elseif state == 2 then
+    -- navigate to http://localhost:8080/owners/%d
+    if not ownerPath then
+      state = (state + 1) % 5
+      return request()
+    end
+    method = "GET"
+    path = ownerPath
+    headers = getHeaders
+    body = ""
+  elseif state == 3 then
+    -- create a new visit for the current pet at http://localhost:8080/owners/%d/pets/%d/visits/new
+    if not ownerPath or not petId then
+      -- Skip if either ownerPath or petId is missing
+      state = (state + 1) % 5
+      return request()
+    end
+    method = "POST"
+    path = ownerPath .. "/pets/" .. petId .. "/visits/new"
+    headers = postHeaders
+    body = string.format(newVisitRequest)
+  elseif state == 4 then
+    -- navigate to http://localhost:8080/owners/%d
+    if not ownerPath then
+      state = (state + 1) % 5
+      return request()
+    end
+    method = "GET"
+    path = ownerPath
+    headers = getHeaders
+    body = ""
+  elseif state == -1 then
+    -- workaround as the response handler is not invoked for the very first request
+    method = "GET"
+    path = "/"
+    headers = getHeaders
+    body = ""
+  end
+  
+  state = (state + 1) % 5
+  return wrk.format(method, path, headers, body)
 end
 
 function response(status, headers, body)
-    if state == 1 then
-        ownerPath = string.sub(headers["Location"], hostUrlLength + 1, -1)
-    elseif state == 3 then
-        petId = string.match(body, 'pets/(%d+)/visits/new')
+  if state == 1 then
+    local location = headers["Location"] or headers["location"]
+    if location then
+      ownerPath = string.sub(location, hostUrlLength + 1, -1)
+    else
+      ownerPath = "/owners/" .. ownerCounter
     end
+  elseif state == 2 then
+    if body then
+      petId = string.match(body, 'pets/(%d+)')
+    end
+  end
 end

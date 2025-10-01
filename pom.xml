@@ -472,7 +472,7 @@
             <groupId>org.graalvm.buildtools</groupId>
             <artifactId>native-maven-plugin</artifactId>
             <configuration>
-              <imageName>${artifactId}-instrumented</imageName>
+              <imageName>${artifactId}-instrumented-lcov</imageName>
               <buildArgs>
                 <buildArg>--pgo-instrument</buildArg>
                 <buildArg>-H:+ProfilingLCOV</buildArg>
@@ -511,11 +511,11 @@
             <groupId>org.graalvm.buildtools</groupId>
             <artifactId>native-maven-plugin</artifactId>
             <configuration>
-              <imageName>demo-report</imageName>
+              <imageName>${artifactId}-report</imageName>
               <buildArgs>
                 <buildArg>--pgo</buildArg>
-                <buildArg>-H:+BuildReport</buildArg>
-                <buildArg>-H:+BuildReportSamplerFlamegraph</buildArg>
+                <buildArg>--emit=build-report</buildArg>
+                <buildArg>-H:+ReportDynamicAccess</buildArg>
               </buildArgs>
             </configuration>
           </plugin>
@@ -530,7 +530,7 @@
             <groupId>org.graalvm.buildtools</groupId>
             <artifactId>native-maven-plugin</artifactId>
             <configuration>
-              <imageName>demo-pie</imageName>
+              <imageName>${artifactId}-pie</imageName>
               <buildArgs>
                 <buildArg>-H:NativeLinkerOption=-pie</buildArg>
               </buildArgs>
@@ -547,7 +547,7 @@
             <groupId>org.graalvm.buildtools</groupId>
             <artifactId>native-maven-plugin</artifactId>
             <configuration>
-              <imageName>demo-pie-rcp</imageName>
+              <imageName>${artifactId}-pie-rcp</imageName>
               <buildArgs>
                 <buildArg>-H:NativeLinkerOption=-pie</buildArg>
                 <buildArg>-H:+RelativeCodePointers</buildArg>
