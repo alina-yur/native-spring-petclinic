@@ -13,7 +13,7 @@ sleep 10
 print "Done waiting for Spring Petclinic to come up..."
 
 print "Warming up Spring Petclinic..."
-wrk -s mixed-requests.lua --duration 10s --connections 1 --threads 1 http://localhost:8080
+wrk -s mixed-requests.lua --duration 20s --connections 1 --threads 1 http://localhost:8080
 print "Exercising Spring Petclinic..."
 wrk -s mixed-requests.lua --duration 20s --connections 1 --threads 1 http://localhost:8080
 
