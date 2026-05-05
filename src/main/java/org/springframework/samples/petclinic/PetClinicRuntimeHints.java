@@ -16,6 +16,9 @@
 
 package org.springframework.samples.petclinic;
 
+import org.apache.coyote.AbstractProtocol;
+import org.apache.coyote.http11.AbstractHttp11Protocol;
+import org.springframework.aot.hint.MemberCategory;
 import org.springframework.aot.hint.RuntimeHints;
 import org.springframework.aot.hint.RuntimeHintsRegistrar;
 import org.springframework.samples.petclinic.model.BaseEntity;
@@ -26,9 +29,11 @@ public class PetClinicRuntimeHints implements RuntimeHintsRegistrar {
 
 	@Override
 	public void registerHints(RuntimeHints hints, ClassLoader classLoader) {
-		hints.resources().registerPattern("db/*"); // https://github.com/spring-projects/spring-boot/issues/32654
+		hints.resources().registerPattern("db/**"); // https://github.com/spring-projects/spring-boot/issues/32654
 		hints.resources().registerPattern("messages/*");
 		hints.resources().registerPattern("mysql-default-conf");
+		hints.reflection().registerType(AbstractProtocol.class, MemberCategory.INVOKE_PUBLIC_METHODS);
+		hints.reflection().registerType(AbstractHttp11Protocol.class, MemberCategory.INVOKE_PUBLIC_METHODS);
 		hints.serialization().registerType(BaseEntity.class);
 		hints.serialization().registerType(Person.class);
 		hints.serialization().registerType(Vet.class);
